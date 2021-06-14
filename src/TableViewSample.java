@@ -284,7 +284,7 @@ public class TableViewSample extends Application {
                             TextArea ta = new TextArea(data.toString());
                             
                             StackPane secondaryLayout = new StackPane();
-                            secondaryLayout.getChildren().add(secondLabel);
+                //            secondaryLayout.getChildren().add(secondLabel);
                             secondaryLayout.getChildren().add(ta);
              
                             Scene secondScene = new Scene(secondaryLayout, 430, 100);
