@@ -1,8 +1,19 @@
+/**************************************
+ *   Title: Proof of concept for membership JavaFX
+ *   Date : 17/062021 Originates
+ *   
+ *   Version : v1.2
+ *   
+ ******************************************/
+
+
+
 import java.util.ArrayList;
 import java.util.List;
 
 import javafx.application.Application;
 import javafx.beans.property.SimpleStringProperty;
+import javafx.beans.value.ChangeListener;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
@@ -74,6 +85,8 @@ public class TableViewSample extends Application {
     new Person("Ethan5", "Williams", "ethan.williams@example.com"),
     new Person("Emma5", "Jones", "emma.jones@example.com"),
     new Person("Michael5", "Brown", "michael.brown@example.com"));
+    
+    private final ObservableList<Person> checkedData = FXCollections.observableArrayList(); // list of all persons checked box
     
     final HBox hb = new HBox();
     
@@ -207,6 +220,13 @@ public class TableViewSample extends Application {
         
         final Button selectButtonBase = new Button("List All Checked");
         
+        final CheckBox callb = new CheckBox("Check All");
+        
+        callb.setOnAction((ActionEvent event) -> {
+        	ObservableList<Person> items = table.getItems();
+      //      System.out.println("items: " + items);
+        });
+        
         addButtonToTable();
         
         addCheckBoxToTable();
@@ -214,22 +234,14 @@ public class TableViewSample extends Application {
         
      // action event
         EventHandler<ActionEvent> event = new EventHandler<ActionEvent>() {
-            public void handle(ActionEvent e)
-            {
-            	System.out.println("selectButtonbase pressed");
-            	TableColumn<Person, Void> columncb = colcb ;
-            	
-            
-            	List<String> columnData2 = new ArrayList<>();
-                for (Person item : table.getItems()) {
-                  //  columnData2.add(column2.getCellObservableValue(item).getValue());
-                 //   System.out.println(columncb.getCellObservableValue(item).getValue());
-                    System.out.println(columncb.getText()); // column title
-                    System.out.println(columncb.hasProperties());
-                    System.out.println(columncb.cellFactoryProperty());
+           public void handle(ActionEvent e)
+           {
+                for (Person item : checkedData) {
+                    System.out.println(item.toString());
                 }
             }
         };
+       
   
         // when button is pressed
         selectButtonBase.setOnAction(event);
@@ -238,14 +250,8 @@ public class TableViewSample extends Application {
         
         TableColumn<Person, String> column = lastNameCol; // column you want
            
-        List<String> columnData = new ArrayList<>();
-        for (Person item : table.getItems()) {
-            columnData.add(column.getCellObservableValue(item).getValue());
-            System.out.println(column.getCellObservableValue(item).getValue());
-        }
-        
  
-        hb.getChildren().addAll(addFirstName, addLastName, addEmail, addButton, selectButtonBase);
+        hb.getChildren().addAll(addFirstName, addLastName, addEmail, addButton, selectButtonBase, callb);
         hb.setSpacing(3);
  
         // the vertical layout box vbox consists of elements from
@@ -277,14 +283,14 @@ public class TableViewSample extends Application {
                         btn.setOnAction((ActionEvent event) -> {
                             Person data = getTableView().getItems().get(getIndex());
                             System.out.println("selectedData: " + data);
-                      //      Label secondLabel = new Label("I'm a Label on new Window");
+                     
                             
                             // setup new window to call 
                             
                             TextArea ta = new TextArea(data.toString());
                             
                             StackPane secondaryLayout = new StackPane();
-                //            secondaryLayout.getChildren().add(secondLabel);
+                
                             secondaryLayout.getChildren().add(ta);
              
                             Scene secondScene = new Scene(secondaryLayout, 430, 100);
@@ -335,11 +341,27 @@ public class TableViewSample extends Application {
                 final TableCell<Person, Void> cell = new TableCell<Person, Void>() {
 
                     private final CheckBox cb = new CheckBox("");
+                   
 
                     {
                         cb.setOnAction((ActionEvent event) -> {
                             Person data = getTableView().getItems().get(getIndex());
-                            System.out.println("selectedData: " + data);
+                           System.out.println("selectedData: " + data);
+                           boolean personPresent = false;
+                           int pos = 0;
+                           for(Person p : checkedData)
+                           {
+                        	   if(p.toString().equals(data.toString())) 
+                        	   { personPresent=true;
+                        	     pos = checkedData.indexOf(data);
+                        	     break;
+                        	   }
+                           }
+                           if (!personPresent)
+                             checkedData.add(data);
+                           else
+                        	   checkedData.remove(pos);
+                            
                         });
                     }
 
@@ -358,6 +380,8 @@ public class TableViewSample extends Application {
         };
 
         colcb.setCellFactory(cellFactory);
+        
+        System.out.println("scolcb id: " + colcb.getId());
 
         table.getColumns().add(colcb);
 
