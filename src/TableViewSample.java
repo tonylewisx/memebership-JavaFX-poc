@@ -2,12 +2,22 @@
  *   Title: Proof of concept for membership JavaFX
  *   Date : 17/062021 Originates
  *   
- *   Version : v1.2
+ *   Version : v1.3
+ *   
+ *   Comment: v1.3 - added Restapi testing 
+ *                   and controller for crud
  *   
  ******************************************/
 
 
 
+import java.io.IOException;
+import java.net.URI;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpRequest.BodyPublishers;
+import java.net.http.HttpResponse;
+import java.net.http.HttpResponse.BodyHandlers;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -48,6 +58,8 @@ import javafx.scene.control.ScrollBar;
 import javafx.scene.control.SeparatorMenuItem;
 import javafx.scene.control.TableCell;
 import javafx.application.Platform;
+
+//import org.json.simple.JSONObject;
 
  
 public class TableViewSample extends Application {
@@ -207,6 +219,8 @@ public class TableViewSample extends Application {
         addEmail.setMaxWidth(emailCol.getPrefWidth());
         addEmail.setPromptText("Email");
  
+        
+        // added record to tableview
         final Button addButton = new Button("Add");
         addButton.setOnAction((ActionEvent e) -> {
             data.add(new Person(
@@ -217,6 +231,29 @@ public class TableViewSample extends Application {
             addLastName.clear();
             addEmail.clear();
         });
+        
+        final Button RestApiButton = new Button("RESTapi");
+        RestApiButton.setOnAction((ActionEvent e) -> {
+            ControllerRestApi capi = new ControllerRestApi();
+            try {
+                //ok  capi.getAll();
+            
+               //ok   capi.insert();
+            
+                  capi.update();
+                  capi.getAll();
+            
+               //ok   capi.get();
+            
+               //ok   capi.delete();
+            
+                  capi.deleteAll();
+            
+              } catch (Exception ex) {
+                   System.out.println("Something went wrong in calling api");
+                   }
+        });
+        
         
         final Button selectButtonBase = new Button("List All Checked");
         
@@ -251,7 +288,7 @@ public class TableViewSample extends Application {
         TableColumn<Person, String> column = lastNameCol; // column you want
            
  
-        hb.getChildren().addAll(addFirstName, addLastName, addEmail, addButton, selectButtonBase, callb);
+        hb.getChildren().addAll(addFirstName, addLastName, addEmail, addButton, selectButtonBase, callb, RestApiButton);
         hb.setSpacing(3);
  
         // the vertical layout box vbox consists of elements from
@@ -433,4 +470,74 @@ public class TableViewSample extends Application {
         }
         
     }
+    
+    public class ControllerRestApi {
+    	
+    	ControllerRestApi(){
+    		
+    	}
+    	
+    	void insert() throws Exception {
+    		HttpClient client = HttpClient.newHttpClient();
+    	      
+    		var tutorial ="{\"id\":7,\"title\":\"shroud of turin 2\",\"description\":\"relgious relic 2\",\"published\":false,\"createdAt\":\"2021-06-18T08:12:52.000Z\",\"updatedAt\":\"2021-06-18T08:12:52.000Z\"}";
+   // 		var tutorial ="{'id':7,'title':'shroud of turin 2','description':'relgious relic 2','published':false,'createdAt':'2021-06-18T08:12:52.000Z','updatedAt':'2021-06-18T08:12:52.000Z'}";
+ //   	    var bodyJson = gson.toJson(person);
+    	    var request = HttpRequest.newBuilder(URI.create("http://192.168.1.74:8080/api/tutorials") )
+    	                              .header("Accept", "application/json")
+    	                              .header("Content-Type", "application/json")
+    	                              .POST(BodyPublishers.ofString(tutorial))
+    	                              .build();
+    //	    populateRequestFields(request, bodyJson);
+    	    HttpResponse<String> response = client.send(request, BodyHandlers.ofString());
+    	    System.out.println("Insert response " + response.body());
+    	//    populateResponseFields(response);
+    	
+    } 
+    	void update() throws Exception{
+    		HttpClient client = HttpClient.newHttpClient();
+    		var tutorial ="{\"id\":7,\"title\":\"shroud of turin 2\",\"description\":\"relgious relic 2 updated\",\"published\":false,\"createdAt\":\"2021-06-18T08:12:52.000Z\",\"updatedAt\":\"2021-06-18T08:12:52.000Z\"}";
+    	    var request = HttpRequest.newBuilder(URI.create("http://192.168.1.74:8080/api/tutorials/7"))
+    	                            .header("Accept", "application/json")
+    	                            .header("Content-Type", "application/json")
+    	                            .PUT(BodyPublishers.ofString(tutorial))
+    	                            .build();
+    	    HttpResponse<String> response = client.send(request, BodyHandlers.ofString());
+    		
+    	}
+    	
+    	void getAll() throws Exception{
+      		HttpClient client = HttpClient.newHttpClient();
+      	    HttpRequest request = HttpRequest.newBuilder(URI.create("http://192.168.1.74:8080/api/tutorials")).build();
+      	    HttpResponse<String> response = client.send(request, BodyHandlers.ofString()); // array json objects
+      	    System.out.println("Get all response " + response.body());
+    		
+    	}
+    	
+    	void get() throws Exception {
+    		HttpClient client = HttpClient.newHttpClient();
+    		HttpRequest request = HttpRequest.newBuilder(URI.create("http://192.168.1.74:8080/api/tutorials/6")).build();
+    		HttpResponse<String> response = client.send(request, BodyHandlers.ofString()); // json object
+    		System.out.println("Get id=6 response " + response.body());
+    		
+    	}
+    	
+    	void delete() throws Exception {
+    		HttpClient client = HttpClient.newHttpClient();
+    		var request = HttpRequest.newBuilder(URI.create("http://192.168.1.74:8080/api/tutorials/6"))
+                    .header("Accept", "application/json")
+                    .DELETE()
+                    .build();
+    		
+            HttpResponse<String> response = client.send(request, BodyHandlers.ofString());
+    		
+    	}
+    	
+    	void deleteAll() throws Exception{
+    		
+    	}
+    	
+    }
+    
+    
 } 
