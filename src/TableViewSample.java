@@ -1,13 +1,14 @@
-/**************************************
+/************************************************************************
  *   Title: Proof of concept for membership JavaFX
  *   Date : 17/062021 Originates
  *   
- *   Version : v1.3
+ *   Version : v1.5
  *   
  *   Comment: v1.3 - added Restapi testing 
  *                   and controller for crud
+ *            v1.5 - added database to tablebview
  *   
- ******************************************/
+ ************************************************************************/
 
 
 
@@ -20,6 +21,8 @@ import java.net.http.HttpResponse;
 import java.net.http.HttpResponse.BodyHandlers;
 import java.util.ArrayList;
 import java.util.List;
+
+import org.json.simple.JSONObject;
 
 import javafx.application.Application;
 import javafx.beans.property.SimpleStringProperty;
@@ -233,6 +236,7 @@ public class TableViewSample extends Application {
         });
         
         final Button RestApiButton = new Button("RESTapi");
+        
         RestApiButton.setOnAction((ActionEvent e) -> {
             ControllerRestApi capi = new ControllerRestApi();
             try {
@@ -258,6 +262,99 @@ public class TableViewSample extends Application {
         final Button selectButtonBase = new Button("List All Checked");
         
         final CheckBox callb = new CheckBox("Check All");
+        
+        // button to get data from mysql database 
+        
+        final Button FromDB = new Button("Get DB");
+        
+        FromDB.setOnAction((ActionEvent e) -> {
+        	
+        	TableView<Person> tabledb = new TableView<>();
+            ObservableList<Tutorials> datadb = FXCollections.observableArrayList();
+            
+    //                FXCollections.observableArrayList(
+    //                new Person("Jacob", "Smith", "jacob.smith@example.com"));
+            
+            ControllerRestApi cr2 = new ControllerRestApi();
+   //           datadb = cr2.getAll();  // fill with data from database
+            
+            
+            
+            //
+        //    ObjectMapper mapper = new ObjectMapper();
+        //    String jsonInString = "{'name' : 'mkyong'}";
+
+            //JSON from file to Object
+        //    User user = mapper.readValue(new File("c:\\user.json"), User.class);
+
+            //JSON from String to Object
+         //   User user = mapper.readValue(jsonInString, User.class);
+            
+            //
+              
+            JSONObject obj = new JSONObject();
+            
+            StackPane secondaryLayout = new StackPane();
+            
+            tabledb.setEditable(true);
+            
+            TableColumn idCol = new TableColumn("Id");
+            idCol.setMinWidth(100);
+            idCol.setCellValueFactory(
+                    new PropertyValueFactory<>("Id"));
+            
+            TableColumn titleCol = new TableColumn("title");
+            titleCol.setMinWidth(100);
+            titleCol.setCellValueFactory(
+                    new PropertyValueFactory<>("title"));
+            
+            TableColumn descCol = new TableColumn("Desc");
+            descCol.setMinWidth(100);
+            descCol.setCellValueFactory(
+                    new PropertyValueFactory<>("desc"));
+            
+            TableColumn pubCol = new TableColumn("Published");
+            pubCol.setMinWidth(100);
+            pubCol.setCellValueFactory(
+                    new PropertyValueFactory<>("Published"));
+            
+            TableColumn caCol = new TableColumn("Created");
+            caCol.setMinWidth(100);
+            caCol.setCellValueFactory(
+                    new PropertyValueFactory<>("Created"));
+            
+            TableColumn uaCol = new TableColumn("Updated");
+            uaCol.setMinWidth(100);
+            uaCol.setCellValueFactory(
+                    new PropertyValueFactory<>("Updated"));
+            
+
+      //      tabledb.setItems(datadb);  // specify table view with static data
+            
+            //   table.getColumns().addAll(firstNameCol, lastNameCol, emailCol);
+               tabledb.getColumns().addAll(idCol, titleCol, descCol, pubCol, caCol, uaCol);
+               
+             StackPane secondaryLayout2 = new StackPane();
+               
+             secondaryLayout2.getChildren().add(tabledb);
+               
+
+            Scene secondScene = new Scene(secondaryLayout, 430, 100);
+
+            // New window (Stage)
+            Stage newWindowdb = new Stage();
+            newWindowdb.setTitle("Data from DB");
+            newWindowdb.setScene(secondScene);
+
+            
+            newWindowdb.initModality(Modality.APPLICATION_MODAL); // must finish new window , other windows unavailable
+     //       newWindow.initModality(Modality.NONE); // new window tottally independent of other windows
+      //      newWindow.initModality(Modality.WINDOW_MODAL);
+
+            newWindowdb.show();
+            
+        });
+        
         
         callb.setOnAction((ActionEvent event) -> {
         	ObservableList<Person> items = table.getItems();
@@ -288,7 +385,7 @@ public class TableViewSample extends Application {
         TableColumn<Person, String> column = lastNameCol; // column you want
            
  
-        hb.getChildren().addAll(addFirstName, addLastName, addEmail, addButton, selectButtonBase, callb, RestApiButton);
+        hb.getChildren().addAll(addFirstName, addLastName, addEmail, addButton, selectButtonBase, callb, RestApiButton, FromDB);
         hb.setSpacing(3);
  
         // the vertical layout box vbox consists of elements from
@@ -467,6 +564,84 @@ public class TableViewSample extends Application {
         @Override
         public String toString() {
             return "first Name: " + firstName.get() + "  " + "Last name: " + lastName.get() + "  Email :" + email.get();
+        }
+        
+    }
+    
+    public static class Tutorials {
+    	 
+        private  int  id;
+        private String title;
+        private  String description;
+        private  int published;
+        private  String createdAt;
+        private  String updatedAt;
+        
+       
+ 
+        private Tutorials(int i ,String t, String d, int p ,String ca, String ua) {
+        	this.id=i;
+            this.title=t;
+            this.description=d;
+            this.published=p;
+            this.createdAt=ca;
+            this.updatedAt=ua;
+            
+            
+        }
+        
+        public int getId() {
+            return this.id;
+        }
+        
+        public void setId(int i) {
+            this.id=i;
+        }
+ 
+        public String getTitle() {
+            return this.title;
+        }
+        
+        public void setTitle(String t) {
+            this.title=t;
+        }
+ 
+        public int getPublished() {
+            return this.published;
+        }
+        
+        public void setPublished(int p) {
+            this.published=p;
+        }
+ 
+        public void setDescription(String d) {
+            this.description=d;
+        }
+ 
+        public String getDescription() {
+            return this.description;
+        }
+ 
+        public void setCreatedAt(String ca){
+            this.createdAt=ca;
+        }
+ 
+        public String getCreatedAt() {
+            return this.createdAt;
+        }
+        
+        public void setUpdatedAt(String ua){
+            this.updatedAt=ua;
+        }
+ 
+        public String getUpdatedAt() {
+            return this.updatedAt;
+        }
+ 
+        
+        @Override
+        public String toString() {
+            return "Id: " + getId() + "  " + "Title: " + getTitle();
         }
         
     }
