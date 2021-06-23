@@ -2,11 +2,12 @@
  *   Title: Proof of concept for membership JavaFX
  *   Date : 17/062021 Originates
  *   
- *   Version : v1.5
+ *   Version : v1.6
  *   
  *   Comment: v1.3 - added Restapi testing 
  *                   and controller for crud
  *            v1.5 - added database to tablebview
+ *            v1.6 - added scroll bars 
  *   
  ************************************************************************/
 
@@ -19,10 +20,13 @@ import java.net.http.HttpRequest;
 import java.net.http.HttpRequest.BodyPublishers;
 import java.net.http.HttpResponse;
 import java.net.http.HttpResponse.BodyHandlers;
+import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
+import org.json.simple.parser.JSONParser;
 
 import javafx.application.Application;
 import javafx.beans.property.SimpleStringProperty;
@@ -58,6 +62,7 @@ import javafx.scene.control.Menu;
 import javafx.scene.control.MenuItem;
 import javafx.scene.control.RadioMenuItem;
 import javafx.scene.control.ScrollBar;
+import javafx.scene.control.ScrollPane;
 import javafx.scene.control.SeparatorMenuItem;
 import javafx.scene.control.TableCell;
 import javafx.application.Platform;
@@ -108,6 +113,8 @@ public class TableViewSample extends Application {
     final HBox hbmenu = new HBox();
     
     TableColumn<Person, Void> colBtn, colcb; // buttton and checkbox columns in tableview
+    
+    Tutor tutrec;
  
     public static void main(String[] args) {
         launch(args);
@@ -200,12 +207,6 @@ public class TableViewSample extends Application {
         emailCol.setMinWidth(200);
         emailCol.setCellValueFactory(
                 new PropertyValueFactory<>("email"));
-        
-    //    TableColumn selectButCol = new TableColumn("View");
-       
-     //   TableColumn checkboxCol = new TableColumn("Select");
-        
-        
  
         table.setItems(data);  // specify table view with static data
         
@@ -222,8 +223,12 @@ public class TableViewSample extends Application {
         addEmail.setMaxWidth(emailCol.getPrefWidth());
         addEmail.setPromptText("Email");
  
+        /***************************************************
+         * 
+         * Button to added record to tableview static data
+         * 
+         ****************************************************/
         
-        // added record to tableview
         final Button addButton = new Button("Add");
         addButton.setOnAction((ActionEvent e) -> {
             data.add(new Person(
@@ -234,6 +239,12 @@ public class TableViewSample extends Application {
             addLastName.clear();
             addEmail.clear();
         });
+        
+        /**********************************************
+         * 
+         *  Button to test REST api 
+         *  
+         ********************************************/
         
         final Button RestApiButton = new Button("RESTapi");
         
@@ -259,40 +270,64 @@ public class TableViewSample extends Application {
         });
         
         
+        
+        
         final Button selectButtonBase = new Button("List All Checked");
         
         final CheckBox callb = new CheckBox("Check All");
         
-        // button to get data from mysql database 
         
+        /***********************************************
+         * 
+         *  button to get data from mysql database
+         * 
+         ************************************************/
+            
         final Button FromDB = new Button("Get DB");
         
         FromDB.setOnAction((ActionEvent e) -> {
         	
-        	TableView<Person> tabledb = new TableView<>();
-            ObservableList<Tutorials> datadb = FXCollections.observableArrayList();
-            
-    //                FXCollections.observableArrayList(
-    //                new Person("Jacob", "Smith", "jacob.smith@example.com"));
+        	TableView<Tutor> tabledb = new TableView<>();
+            ObservableList<Tutor> datadb = FXCollections.observableArrayList();
             
             ControllerRestApi cr2 = new ControllerRestApi();
-   //           datadb = cr2.getAll();  // fill with data from database
-            
-            
-            
-            //
-        //    ObjectMapper mapper = new ObjectMapper();
-        //    String jsonInString = "{'name' : 'mkyong'}";
-
-            //JSON from file to Object
-        //    User user = mapper.readValue(new File("c:\\user.json"), User.class);
-
-            //JSON from String to Object
-         //   User user = mapper.readValue(jsonInString, User.class);
-            
-            //
+   //           datadb = cr2.getAll();  // fill with data from database      
               
-            JSONObject obj = new JSONObject();
+   // 		String tut ="[{\"id\":7,\"title\":\"shroud of turin 2\",\"description\":\"relgious relic 2\",\"published\":false,\"createdAt\":\"2021-06-18T08:12:52.000Z\",\"updatedAt\":\"2021-06-18T08:12:52.000Z\"}]";
+          //  JSONObject obj = new JSONObject();
+            
+    		JSONParser parser = new JSONParser();      
+            	
+               Object obj = new Object();;
+			try {
+				//  String tut = cr2.get();
+				  String tut = cr2.getAll();
+				 // tut = "["+tut+"]";
+				  System.out.println("tut is : "+tut);
+				obj = parser.parse(tut);
+			} catch (org.json.simple.parser.ParseException e1) {
+				// TODO Auto-generated catch block
+				e1.printStackTrace();
+			} catch (Exception e2) {}
+               
+               JSONArray array = (JSONArray)obj;
+               
+      //         JSONObject jo = (JSONObject)array.get(0);
+  
+               for (int i=0 ; i< array.size() ; i++) {
+            	   tutrec = jsonTopojoTutorials((JSONObject)array.get(i));
+            	   datadb.add(tutrec);
+            	   tutrec = null;
+               }
+               
+        //       tutrec = jsonTopojoTutorials(jo);
+       //        datadb.add(tutrec);
+               
+
+           //    JSONObject obj2 = (JSONObject)array.get(1);
+           //    System.out.println("Field \"1\"");
+           //    System.out.println(obj2.get("1"));    
+       
             
             StackPane secondaryLayout = new StackPane();
             
@@ -303,7 +338,7 @@ public class TableViewSample extends Application {
             idCol.setCellValueFactory(
                     new PropertyValueFactory<>("Id"));
             
-            TableColumn titleCol = new TableColumn("title");
+            TableColumn titleCol = new TableColumn("Title");
             titleCol.setMinWidth(100);
             titleCol.setCellValueFactory(
                     new PropertyValueFactory<>("title"));
@@ -311,35 +346,51 @@ public class TableViewSample extends Application {
             TableColumn descCol = new TableColumn("Desc");
             descCol.setMinWidth(100);
             descCol.setCellValueFactory(
-                    new PropertyValueFactory<>("desc"));
+                    new PropertyValueFactory<>("description"));
             
             TableColumn pubCol = new TableColumn("Published");
             pubCol.setMinWidth(100);
             pubCol.setCellValueFactory(
-                    new PropertyValueFactory<>("Published"));
+                    new PropertyValueFactory<>("published"));
             
             TableColumn caCol = new TableColumn("Created");
             caCol.setMinWidth(100);
             caCol.setCellValueFactory(
-                    new PropertyValueFactory<>("Created"));
+                    new PropertyValueFactory<>("createdAt"));
             
             TableColumn uaCol = new TableColumn("Updated");
             uaCol.setMinWidth(100);
             uaCol.setCellValueFactory(
-                    new PropertyValueFactory<>("Updated"));
+                    new PropertyValueFactory<>("updatedAt"));
             
 
-      //      tabledb.setItems(datadb);  // specify table view with static data
+            tabledb.setItems(datadb);  // specify table view with static data
             
             //   table.getColumns().addAll(firstNameCol, lastNameCol, emailCol);
                tabledb.getColumns().addAll(idCol, titleCol, descCol, pubCol, caCol, uaCol);
                
-             StackPane secondaryLayout2 = new StackPane();
+            StackPane secondaryLayout2 = new StackPane();
                
-             secondaryLayout2.getChildren().add(tabledb);
+            secondaryLayout2.getChildren().add(tabledb);
+            
+            // setup scroll pane 
                
-
-            Scene secondScene = new Scene(secondaryLayout, 430, 100);
+            VBox vb2 = new VBox();
+          
+            ScrollPane sp = new ScrollPane();
+            sp.setVmax(440);
+            sp.setPrefSize(300, 150);
+            
+            sp.setContent(secondaryLayout2);
+            
+            vb2.getChildren().addAll(sp);
+            
+            
+            
+            
+      //      Scene secondScene = new Scene(secondaryLayout2, 730, 300);
+            
+            Scene secondScene = new Scene(vb2, 730, 300);
 
             // New window (Stage)
             Stage newWindowdb = new Stage();
@@ -347,7 +398,7 @@ public class TableViewSample extends Application {
             newWindowdb.setScene(secondScene);
 
             
-            newWindowdb.initModality(Modality.APPLICATION_MODAL); // must finish new window , other windows unavailable
+       //     newWindowdb.initModality(Modality.APPLICATION_MODAL); // must finish new window , other windows unavailable
      //       newWindow.initModality(Modality.NONE); // new window tottally independent of other windows
       //      newWindow.initModality(Modality.WINDOW_MODAL);
 
@@ -380,10 +431,6 @@ public class TableViewSample extends Application {
         // when button is pressed
         selectButtonBase.setOnAction(event);
         
-        // list lastnames from display on screen
-        
-        TableColumn<Person, String> column = lastNameCol; // column you want
-           
  
         hb.getChildren().addAll(addFirstName, addLastName, addEmail, addButton, selectButtonBase, callb, RestApiButton, FromDB);
         hb.setSpacing(3);
@@ -402,6 +449,49 @@ public class TableViewSample extends Application {
         stage.setScene(scene);
         stage.show();
     }
+    
+    
+    /*****************************************************
+     * 
+     *  Method converts json object to pojo tutor DTO
+     * 
+     *********************************************************/
+    
+     Tutor jsonTopojoTutorials(JSONObject jo){
+    	 
+         boolean pub = Boolean.parseBoolean(jo.get("published").toString()); 
+    	
+         Tutor tutorialrec = new Tutor(Integer.parseInt(jo.get("id").toString()), jo.get("title").toString(), jo.get("description").toString(), pub, jo.get("createdAt").toString(), jo.get("updatedAt").toString() );
+
+    	return tutorialrec;
+    }
+     
+     /********************************************************
+      * 
+      *  Method to construct  a Tutor JSON Object
+      *  
+      *  
+      **********************************************/
+    
+      JSONObject creJsonTutor(int i, String t , String d, boolean p,  String cat ,String ua) {
+    	  
+    	  JSONObject jobj = new JSONObject();
+
+          jobj.put("id", i);
+          jobj.put("title", t);
+          jobj.put("description", d);
+          jobj.put("createdAt", cat);
+          jobj.put("updatedAt", ua);
+          jobj.put("published", p);
+          
+          return jobj;
+      }
+    
+     /*********************************************
+      * 
+      *   Added Button table column to tableview
+      *   
+      *********************************************/
     
      void addButtonToTable() {
          colBtn = new TableColumn("Correct Button");
@@ -465,6 +555,12 @@ public class TableViewSample extends Application {
         table.getColumns().add(colBtn);
 
     }
+     
+     /****************************************************
+      * 
+      *  Added Check Box column to tableview
+      *  
+      ******************************************************/
     
      void addCheckBoxToTable() {
         colcb = new TableColumn("Correct Checkbox");
@@ -521,7 +617,11 @@ public class TableViewSample extends Application {
 
     }
     
-    
+    /*******************************************
+     * 
+     *   Person DTO for Static data
+     *
+     *****************************************/
  
     public static class Person {
  
@@ -568,18 +668,23 @@ public class TableViewSample extends Application {
         
     }
     
-    public static class Tutorials {
-    	 
+    /***************************************************
+     * 
+     *   Tutor DTO for data from RESTapi and Mysql DB
+     *
+     *******************************************************/
+    
+    public static class Tutor {
+    	
         private  int  id;
         private String title;
         private  String description;
-        private  int published;
+        private  boolean published;
         private  String createdAt;
         private  String updatedAt;
-        
-       
+          
  
-        private Tutorials(int i ,String t, String d, int p ,String ca, String ua) {
+        public Tutor(int i ,String t, String d, boolean p ,String ca, String ua) {
         	this.id=i;
             this.title=t;
             this.description=d;
@@ -606,11 +711,11 @@ public class TableViewSample extends Application {
             this.title=t;
         }
  
-        public int getPublished() {
+        public boolean getPublished() {
             return this.published;
         }
         
-        public void setPublished(int p) {
+        public void setPublished(boolean p) {
             this.published=p;
         }
  
@@ -645,6 +750,12 @@ public class TableViewSample extends Application {
         }
         
     }
+    
+    /*******************************************************
+     * 
+     *  Conytroller to add/retrieve data from DB 
+     *
+     **********************************************************/
     
     public class ControllerRestApi {
     	
@@ -681,19 +792,21 @@ public class TableViewSample extends Application {
     		
     	}
     	
-    	void getAll() throws Exception{
+    	String getAll() throws Exception{
       		HttpClient client = HttpClient.newHttpClient();
       	    HttpRequest request = HttpRequest.newBuilder(URI.create("http://192.168.1.74:8080/api/tutorials")).build();
       	    HttpResponse<String> response = client.send(request, BodyHandlers.ofString()); // array json objects
       	    System.out.println("Get all response " + response.body());
+      	    return response.body();
     		
     	}
     	
-    	void get() throws Exception {
+    	String get() throws Exception {
     		HttpClient client = HttpClient.newHttpClient();
-    		HttpRequest request = HttpRequest.newBuilder(URI.create("http://192.168.1.74:8080/api/tutorials/6")).build();
+    		HttpRequest request = HttpRequest.newBuilder(URI.create("http://192.168.1.74:8080/api/tutorials/4")).build();
     		HttpResponse<String> response = client.send(request, BodyHandlers.ofString()); // json object
-    		System.out.println("Get id=6 response " + response.body());
+    		System.out.println("Get id=4 response " + response.body());
+    		return response.body();
     		
     	}
     	
