@@ -8,6 +8,7 @@
  *                   and controller for crud
  *            v1.5 - added database to tablebview
  *            v1.6 - added scroll bars 
+ *            v1.7 - added DAO and services
  *   
  ************************************************************************/
 
@@ -385,9 +386,7 @@ public class TableViewSample extends Application {
             
             vb2.getChildren().addAll(sp);
             
-            
-            
-            
+ 
       //      Scene secondScene = new Scene(secondaryLayout2, 730, 300);
             
             Scene secondScene = new Scene(vb2, 730, 300);
@@ -416,6 +415,19 @@ public class TableViewSample extends Application {
         
         addCheckBoxToTable();
         
+        /********************************************
+         * 
+         * test services , controller 
+         * 
+         *********************************************/
+        
+        MembershipService msjdbc = new MembershipService(new DAO_jdbc_Imp());
+        MembershipService msrestapi = new MembershipService(new ControllerRestApi());
+        
+        msjdbc.regNewPerson();
+        
+        msrestapi.regNewPerson();
+         
         
      // action event
         EventHandler<ActionEvent> event = new EventHandler<ActionEvent>() {
@@ -757,13 +769,13 @@ public class TableViewSample extends Application {
      *
      **********************************************************/
     
-    public class ControllerRestApi {
+    public class ControllerRestApi implements DAO_Int {
     	
     	ControllerRestApi(){
     		
     	}
     	
-    	void insert() throws Exception {
+    	public void insert() throws Exception {
     		HttpClient client = HttpClient.newHttpClient();
     	      
     		var tutorial ="{\"id\":7,\"title\":\"shroud of turin 2\",\"description\":\"relgious relic 2\",\"published\":false,\"createdAt\":\"2021-06-18T08:12:52.000Z\",\"updatedAt\":\"2021-06-18T08:12:52.000Z\"}";
@@ -779,8 +791,8 @@ public class TableViewSample extends Application {
     	    System.out.println("Insert response " + response.body());
     	//    populateResponseFields(response);
     	
-    } 
-    	void update() throws Exception{
+        } 
+    	public void update() throws Exception{
     		HttpClient client = HttpClient.newHttpClient();
     		var tutorial ="{\"id\":7,\"title\":\"shroud of turin 2\",\"description\":\"relgious relic 2 updated\",\"published\":false,\"createdAt\":\"2021-06-18T08:12:52.000Z\",\"updatedAt\":\"2021-06-18T08:12:52.000Z\"}";
     	    var request = HttpRequest.newBuilder(URI.create("http://192.168.1.74:8080/api/tutorials/7"))
@@ -792,7 +804,7 @@ public class TableViewSample extends Application {
     		
     	}
     	
-    	String getAll() throws Exception{
+    	public String getAll() throws Exception{
       		HttpClient client = HttpClient.newHttpClient();
       	    HttpRequest request = HttpRequest.newBuilder(URI.create("http://192.168.1.74:8080/api/tutorials")).build();
       	    HttpResponse<String> response = client.send(request, BodyHandlers.ofString()); // array json objects
@@ -801,7 +813,7 @@ public class TableViewSample extends Application {
     		
     	}
     	
-    	String get() throws Exception {
+    	public String get() throws Exception {
     		HttpClient client = HttpClient.newHttpClient();
     		HttpRequest request = HttpRequest.newBuilder(URI.create("http://192.168.1.74:8080/api/tutorials/4")).build();
     		HttpResponse<String> response = client.send(request, BodyHandlers.ofString()); // json object
@@ -810,7 +822,8 @@ public class TableViewSample extends Application {
     		
     	}
     	
-    	void delete() throws Exception {
+    	public void delete() {
+    		try {
     		HttpClient client = HttpClient.newHttpClient();
     		var request = HttpRequest.newBuilder(URI.create("http://192.168.1.74:8080/api/tutorials/6"))
                     .header("Accept", "application/json")
@@ -818,12 +831,49 @@ public class TableViewSample extends Application {
                     .build();
     		
             HttpResponse<String> response = client.send(request, BodyHandlers.ofString());
+    		} catch (Exception e2) {}
     		
     	}
     	
-    	void deleteAll() throws Exception{
-    		
+    	public void deleteAll() throws Exception{
+    		System.out.println("deleteAll() executed from restapi DAO");
     	}
+    	
+    }
+    
+    public interface DAO_Int {
+    	void insert() throws Exception;
+    	void update() throws Exception;
+    	public void delete() ;
+    	String get() throws Exception;
+    	String getAll() throws Exception;
+    	void deleteAll() throws Exception;
+    	
+    }
+    
+    public class MembershipService {
+    	
+      DAO_Int ci;
+    	
+    	MembershipService(DAO_Int c){this.ci = c;}
+    	
+    	void regNewPerson() { 
+    		try {ci.deleteAll();} catch (Exception e3) {}
+    		
+    		} 
+    	
+    }
+    
+    public class DAO_jdbc_Imp implements DAO_Int{
+    	
+    	DAO_jdbc_Imp(){};
+    	
+    	public void update() throws Exception {};
+    	public void delete() {};
+    	 public String get() throws Exception {String s="abc"; System.out.println("get() from jdbc imp"); return s;};
+    	 public String getAll() throws Exception {String s="abc";System.out.println("getAll() from jdbc imp"); return s;};
+    	 public void insert() {};
+    	 public void deleteAll() throws Exception {System.out.println("deleteAll() from jdbc DAO");};
     	
     }
     
